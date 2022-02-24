@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/kanban.css') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='vendors/choices.js/choices.min.css') }}">
+<style>
+.rectangle {
+  height: 10px;
+  width: 25px;
+  display: inline-block;
+}
+</style>
+{% endblock %}
+{% block content %}
+    <div class="page-title">
+        <h3>Orders</h3>
+    </div>
+    <section class="section">
+        <div class="row">
+            <!--Search bar-->
+            <!--Create an if statement or a query that can change the tickets on display-->
+            <form method="GET" action = "/{{view}}/">
+                <div class="col-12 mb-1">
+                    <div class="input-group mb-3 col-6">
+                        <input type="text" name="search" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="button-addon2">
+                        <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Search</button>
+                        
+                        
+                        <select id="kanbanFilter" class="form-select" name="order_type" style="margin-left: 5%">
+                            <option value="1" {% if request.args.get('order_type') == '1' %} selected {% endif %}>All Orders</option>
+                            {% if view == 'procurement' %}
+                                <option value="2" {% if request.args.get('order_type') == '2' %} selected {% endif %}>Push Orders</option>
+                                <option value="3" {% if request.args.get('order_type') == '3' %} selected {% endif %}>Non-Push Orders</option>
+                            {% endif %}
+                            <option value="4" {% if request.args.get('order_type') == '4' %} selected {% endif %}>Issues</option>
+                        </select>
+                        <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Filter</button>
+
+                        <a class="btn" href="/{{view}}/" style="margin-left: 5%">Clear</a>
+                    </div> 
+                </div> 
+            </form>
+            <!--End Search bar-->
+            <div class="col-12 col-md-12">
+                <div class="kanban-board container-fluid mt-lg-3">
+                    {% for key, value in statuses.items() %}
+                        <div class="kanban-col">
+                            <div class="card-list">
+                                <div class="card-list-header">
+                                    <h6><span data-toggle="tooltip" data-placement="top" title="{{ value.1 }}" style="border-bottom: 1px dotted black;">{{ value.0 }}</span></h6>
+                                </div>
+                                <div class="card-list-body" id="{{ key }}">
+                                    {% for order in orders %}
+                                        {% if order.status.name == key %}
+                                            <div class="card card-kanban" id="{{ order.id }}">
+                                                <div class="progress">
+                                                    <div class="progress-bar {% if order.practice_id %} bg-primary {% else %} bg-success {% endif %}" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div onclick="location.href='/{{view}}/?order={{order.id}}';" style="cursor: pointer;">
+                                                        <div class="card-title d-flex justify-content-between">
+                                                            <h6 style="font-size: 22px;">#{{ order.id }}</h6>
+                                                            {% if order.assigned_user%}
+                                                                <div class="avatar bg-warning">
+                                                                    <span class="avatar-content">{{ users_on_order[order.id][1] }}</span>
+                                                                </div>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="d-flex justify-content-between">
+                                                            <span>{{ products_on_order[order.id] }} items</span>
+                                                            <span>{{ days_elapsed[order.id] }} days elapsed</span>
+                                                            {% if order_has_flag[order.id] %}
+                                                                <span><i class="fas fa-exclamation-circle fa-lg" style="color:red"></i></span>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% if request.args.get('order') %}
+                    <div class="modal modal-task">
+                        <div class="modal-dialog modal-lg" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Order #{{ order.id }}: {% if order.practice_id %}Push order{% else %}Procurement order{% endif %} {% if order_has_flag[order.id] %}<i class="fas fa-exclamation-circle"></i>{% endif %}</h5>
+                                    <a type="button" class="close btn btn-round" aria-label="Close" href="/{{view}}">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </div>
+                                <!--end of modal head-->
+                                <div class="modal-body">
+                                    <div class="page-header">
+                                        <div>
+                                            <div class="d-flex justify-content-between text-small">
+                                                <span>{% if order.practice_id %} Destination: {{ practice_name }} {% else %} Supplier {% endif %}</span>
+                                                <span>Order Created: {{ order.created_at.strftime('%d/%m/%Y') }} </span>
+                                                <span>{{ days_elapsed[order.id] }} days elapsed</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <ul class="nav nav-tabs nav-fill" role="tablist">
+                                        <li class="nav-item">
+                                            <a class="nav-link {% if not request.args.get('tab') or request.args.get('tab') == 'summary' %} active {% endif %}" data-toggle="tab" href="#summary" role="tab" aria-controls="summary" aria-selected="true">Goods</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link {% if request.args.get('tab') == 'flags' %} active {% endif %}" data-toggle="tab" href="#flags" role="tab" aria-controls="flags" aria-selected="false">Flags</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-toggle="tab" href="#users" role="tab" aria-controls="users" aria-selected="false">Users</a>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade {% if not request.args.get('tab') or request.args.get('tab') == 'summary' %} show active {% endif %}" id="summary" role="tabpanel">
+                                            <div class="content-list" data-filter-list="content-list-body">
+                                                <div class="row content-list-head">
+                                                    <div class="col-auto">
+                                                        <h3>Goods</h3>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="content-list-body">
+                                                <div class="table-responsive">
+                                                    <table class="table">
+                                                    <thead>
+                                                        <tr>
+                                                        <th>Name</th>
+                                                        <th>Quantity</th>
+                                                        <th>Price</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    {% for product in products %}
+                                                        <tr>
+                                                            <td>{{ product.name }}</td>
+                                                            <td>{{ product.quantity }}</td>
+                                                            <td>{{ product.price }}</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                    </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!--end of tab-->
+                                        <div class="tab-pane fade {% if request.args.get('tab') == 'flags' %} show active {% endif %}" id="flags" role="tabpanel" data-filter-list="list-group-activity">
+                                            <div class="content-list">
+                                                <div class="row content-list-head">
+                                                    <div class="col-auto">
+                                                        <h3>Flags</h3>
+                                                    </div>
+                                                </div>
+                                                <div class="content-list-body">
+                                                    {% for flag in flags %}
+                                                        <div class="card card-note">
+                                                            <div class="card-header">
+                                                                <div class="media align-items-center">
+                                                                    <div class="media-body">
+                                                                        <h6 class="mb-0" data-filter-by="text">{{ flag_types[flag.type.name] }}</h6>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="d-flex align-items-center">
+                                                                    <span data-filter-by="text">{{ flag.created_at.strftime('%d/%m/%Y') }}</span>
+                                                                    <form method="POST" action="/{{view}}/delete-flag">
+                                                                        <input type="hidden" name="order" value="{{ order.id }}">
+                                                                        <input type="hidden" name="flag" value="{{ flag.id }}">
+                                                                        <button style="margin-left:20px;" type="submit" class="btn-danger">
+                                                                            <i class="fas fa-times"></i>
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                            <div class="card-body" data-filter-by="text">
+                                                                <p>{{ flag.description }}</p>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                    <br>
+                                                    <h3>Add a flag</h3>
+                                                    <form method="POST" action="/{{view}}/flag">
+                                                        <fieldset class="form-group">
+                                                            <input type="hidden" name="order" value="{{ order.id }}">
+                                                            <select class="form-select" name="type" required>
+                                                                <option disabled selected>Choose type...</option>
+                                                                {% for key, value in flag_types.items() %}
+                                                                    <option value="{{ key }}">{{ value }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                            <br>
+                                                            <textarea class="form-control" name="text" rows="3" placeholder="Enter description" required></textarea>
+                                                            <br>
+                                                            <input type="submit" class="btn btn-primary mr-1 mb-1">
+                                                        </fieldset>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="users" role="tabpanel" data-filter-list="list-group-activity">
+                                            <div class="content-list">
+                                                <div class="content-list-body">
+                                                    {% if order.assigned_user %}
+                                                        <p><a style="color:#007bff">{{ users_on_order[order.id][0] }}</a> is currently assigned to this order</p>
+                                                    {% endif %}
+                                                    <h3>Assign a user to this ticket</h3>
+                                                    <form method="POST" action="/{{view}}/assign-user">
+                                                        <fieldset class="form-group">
+                                                            <input type="hidden" name="order" value="{{ order.id }}">
+                                                            <select class="choices form-select" name="user">
+                                                                <option value="" disabled selected>Select user...</option>
+                                                                {% for user in users %}
+                                                                    <option value="{{user.id}}">{{user.name}}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                            <br>
+                                                            <input type="submit" class="btn btn-primary mr-1 mb-1">
+                                                        </fieldset>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+    <div>
+        <span class="rectangle" style="background-color: #28a745;"> </span>
+        <span>Procurement Order</span>
+        {% if "procurement" == view %}
+        <span class="rectangle" style="background-color: #007bff;"> </span>
+        <span>Push Order</span>
+        {% endif %}
+    </div>
+{% endblock %}
+{% block additional_scripts %}
+    <script>
+        function statusChange(element, destination){
+            console.log(element);
+            console.log(destination);
+            
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = "/{{view}}/status-update";
+
+            const order = document.createElement("input");
+            order.type = "hidden";
+            order.name = "order";
+            order.value = element;
+            form.appendChild(order);
+
+            const status = document.createElement("input");
+            status.type = "hidden";
+            status.name = "status";
+            status.value = destination;
+            form.appendChild(status);
+
+            document.body.appendChild(form);
+            console.log(form);
+            form.submit();
+        }
+    </script>
+
+    <script type="text/javascript" src="{{ url_for('static',filename='js/jquery.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='js/popper.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='js/bootstrap.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='js/autosize.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='js/flatpickr.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='js/draggable.bundle.legacy.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='js/swap-animation.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='js/dropzone.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='js/list.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='js/theme.js') }}"></script>
+    <script src="{{ url_for('static',filename='vendors/choices.js/choices.min.js') }}"></script>
+{% endblock %}

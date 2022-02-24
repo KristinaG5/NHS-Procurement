@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+    <div class="row">
+        <div class="col-12 col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-heading p-1 pl-3">Auto-order</h3>
+                    <p class="pl-3">Add stock items & targets to enable them for automatic ordering by clicking "Add new stock item" <br>This will automatically create orders to replenish used stock when you click "Generate orders"</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8 col-12">
+                            <div class="table-responsive">
+                                <table class="table" id="table1">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th><span data-toggle="tooltip" data-placement="top" title="The quantity currently available in the warehouse" style="border-bottom: 1px dotted black;">Current Quantity</span></th>
+                                            <th><span data-toggle="tooltip" data-placement="top" title="The quantity currently in orders (not yet arrived)" style="border-bottom: 1px dotted black;">Pending Quantity</span></th>
+                                            <th><span data-toggle="tooltip" data-placement="top" title="The ideal quantity to have in the warehouse" style="border-bottom: 1px dotted black;">Target Quantity</span></th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in stock %}
+                                            <tr>
+                                                <td>{{ item.name }}</td>
+                                                <td>{{ item.current_qty }}</td>
+                                                <td>{{ item.pending_qty }}</td>
+                                                <td>{{ item.target_qty }}</td>
+                                                <td>
+                                                    <form method="POST" action="/{{view}}/delete-stock">
+                                                        <input type="hidden" name="stock" value="{{ item.id }}">
+                                                        <input type="submit" class="btn btn-danger" value="Delete">
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <br>
+                            <a class="btn btn-info round" href="/{{view}}/add-stock">Add new stock item</a>
+                            <br><br>
+                            <form method="POST" action="/{{view}}/auto-order">
+                                <button type="submit" class="btn btn-success round">Generate orders</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

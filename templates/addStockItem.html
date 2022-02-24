@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+    <div class="row">
+        <div class="col-12 col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-heading p-1 pl-3">Auto-order</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8 col-12">
+                            <form class="form form-vertical" method="POST" action="/{{view}}/add-stock">
+                                <div class="form-body">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="col-md-6 mb-4">
+                                                <div class="form-group">
+                                                    <label for="good-id">Select good</label>
+                                                    <select class="choices form-select" name="good">
+                                                        {% for product in products %}
+                                                            <option value="{{product.id}}">{{product.name}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="col-md-6 mb-4">
+                                                <div class="form-group">
+                                                    <label for="quantity">Current Quantity</label>
+                                                    <input type="number" id="quantity" class="form-control" name="quantity" placeholder="Enter your quantity...">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="col-md-6 mb-4">
+                                                <div class="form-group">
+                                                    <label for="target">Target Quantity</label>
+                                                    <input type="number" id="target" class="form-control" name="target" placeholder="Enter your target quantity...">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-success round">Add</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

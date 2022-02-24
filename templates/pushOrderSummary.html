@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/push.css') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='vendors/choices.js/choices.min.css') }}">
+{% endblock %}
+{% block content %}
+<section id="basic-vertical-layouts">
+    <div class="row match-height">
+        <div class="col-2"></div>
+        <div class="col-8">
+        <div class="card">
+            <div class="card-header">
+            <h4 class="card-title">Order summary: {{good}}</h4>
+            </div>
+            <div class="card-content">
+                <div class="card-body">
+                    <form class="form form-vertical" method="POST" action="/{{view}}/pushorder/submit">
+                        <div class="form-body">
+                            <div class="row">
+                                <input type="hidden" name="good" value="{{good}}">
+                                <input type="hidden" name="quantity" value="{{quantity}}">
+                                <input type="hidden" name="region" value="{{region}}">
+                                
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                        <thead>
+                                            <tr>
+                                            <th>PRACTICE</th>
+                                            <th>QUANTITY</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for practice in practices %}
+                                                <input type="hidden" name="{{practice.id}}" value="{{practice.value}}">
+                                                <tr>
+                                                    <td class="text-bold-500">{{practice.name}}</td>
+                                                    <td>{{practice.value}}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="overflow:auto;">
+                            <div class="form-check">
+                                <div class="checkbox">
+                                    <input type="checkbox" name="create_another" id="checkbox1" class="form-check-input">
+                                    <label for="checkbox1">Create another order?</label>
+                                </div>
+                            </div>
+                            <div style="float:right;">
+                                <button type="submit" id="submit" class="btn btn-primary mr-1 mb-1">Submit</button>
+                            </div>
+                        </div>
+                        <div style="text-align:center;margin-top:40px;">
+                            <span class="step"></span>
+                            <span class="step"></span>
+                            <span class="step active"></span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        </div>
+        <div class="col-2"></div>
+    </div>
+</section>
+{% endblock %}

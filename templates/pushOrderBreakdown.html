@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/push.css') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='vendors/choices.js/choices.min.css') }}">
+{% endblock %}
+{% block content %}
+<section id="basic-vertical-layouts">
+    <div class="row match-height">
+        <div class="col-2"></div>
+        <div class="col-8">
+        <div class="card">
+            <div class="card-header">
+            <h4 class="card-title">Create your push order</h4>
+            </div>
+            <div class="card-content">
+                <div class="card-body">
+                    <form class="form form-vertical" method="POST" action="/{{view}}/pushorder/summary">
+                        <div class="form-body">
+                            <div class="row">
+                                <input type="hidden" name="good" value="{{good}}">
+                                <input type="hidden" name="quantity" value="{{quantity}}">
+                                <input type="hidden" name="region" value="{{region}}">
+                                
+                                {% for practice in practices %}
+                                    <div class="col-12">
+                                        <div class="col-md-6 mb-4">
+                                            <div id="{{practice.id}}" class="form-group position-relative has-icon-right">
+                                                <label for="prac-{{practice.id}}" >{{practice.name}}</label>
+                                                <b for="prac-{{practice.id}}" >  size : {{practice.size}}</b>
+                                                <input id="prac-{{practice.id}}" type="text" class="form-control" name="{{practice.id}}" value="{{practice.quantity}}">
+                                                <span class="close form-control-icon">&times;</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div style="overflow:auto;">
+                            <div style="float:right;">
+                                <button type="submit" id="nextBtn" class="btn btn-primary mr-1 mb-1">Next</button>
+                            </div>
+                        </div>
+                            
+                        <div style="text-align:center;margin-top:40px;">
+                            <span class="step"></span>
+                            <span class="step active"></span>
+                            <span class="step"></span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        </div>
+        <div class="col-2"></div>
+    </div>
+</section>
+{% endblock %}
+{% block additional_scripts %}
+<script src="{{ url_for('static',filename='vendors/choices.js/choices.min.js') }}"></script>
+
+
+<script>
+    var practices ={{practices|safe}};
+    var quantity = {{quantity}};
+
+    function calculateRatio () {
+        var total_hospital_size = 0;
+
+        for (var i=0; i<practices.length;i++) {
+            total_hospital_size += practices[i].size;
+        }
+
+        
+        for (var i=0; i<practices.length; i++) {
+            var id = "prac-" + practices[i].id;
+            var qty = (practices[i].size / total_hospital_size) * quantity;
+            document.getElementById(id).value = Math.floor(qty);
+        }   
+    }
+
+    var closebtns = document.getElementsByClassName("close");
+    var i;
+    
+    for (i = 0; i < closebtns.length; i++) {
+        closebtns[i].addEventListener("click", function() {
+            this.parentNode.parentNode.parentElement.remove()
+            var practice_id = this.parentNode.id;
+            for (j = 0; j< practices.length; j++) {
+                if (practices[j].id == practice_id) {
+                    practices.splice(j, 1);
+                    break;
+                }
+            }
+            calculateRatio();
+        });
+    }
+
+    calculateRatio();
+
+</script>
+
+{% endblock %}

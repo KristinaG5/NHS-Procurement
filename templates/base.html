@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/bootstrap.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static',filename='vendors/chartjs/Chart.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static',filename='vendors/perfect-scrollbar/perfect-scrollbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/app.css') }}">
+    <!-- <link rel="shortcut icon" href="{{ url_for('static',filename='images/favicon.svg') }}" type="image/x-icon"> -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    {% block additional_css %}
+    {% endblock %}
+</head>
+<body>
+    <div id="app">
+        <div id="sidebar" class='active'>
+            <div class="sidebar-wrapper active">
+                <div class="sidebar-header">
+                    <img src="{{ url_for('static',filename='images/logo.png') }}" alt="" srcset="">
+                </div>
+                <div class="sidebar-menu">
+                    <ul class="menu">
+                        <li class="sidebar-item {% if current_url == '/'%} active  {% endif %}">
+                            <a href="/{{view}}" class='sidebar-link'>
+                                <i class="fas fa-home"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {% if 'chat' in current_url %} active  {% endif %}">
+                            <a href="/{{view}}/chat" class='sidebar-link'>
+                                <i class="fas fa-comments"></i>
+                                <span>Chat</span>
+                            </a>
+                        </li>
+                        {% if "procurement" == view %}
+                            <li class="sidebar-item {% if 'auto-order' in current_url %} active {% endif %}">
+                                <a href="/procurement/auto-order" class='sidebar-link'>
+                                    <i class="fas fa-history"></i>
+                                    <span>Auto-order</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-item {% if 'pushorder' in current_url %} active  {% endif %}">
+                                <a href="/procurement/pushorder" class='sidebar-link'>
+                                    <i class="fas fa-shipping-fast"></i>
+                                    <span>Push Order</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <button class="sidebar-toggler btn x"><i data-feather="x"></i></button>
+            </div>
+        </div>
+        <div id="main">
+            <nav class="navbar navbar-header navbar-expand navbar-light">
+                <a class="sidebar-toggler" href="#"><span class="navbar-toggler-icon"></span></a>
+                <button class="btn navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav d-flex align-items-center navbar-light ml-auto">
+                        <li class="dropdown nav-icon">
+                            <a href="#" data-toggle="dropdown" class="nav-link  dropdown-toggle nav-link-lg nav-link-user">
+                                <div class="d-lg-inline-block">
+                                    <i class="fa fa-bell fa-2x"></i>
+                                    {{ num_notifications }}
+                                </div>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right dropdown-menu-large">
+                                <h6 class='py-2 px-4'>Notifications</h6>
+                                <ul class="list-group rounded-none">
+                                    {% for notification in notifications %}
+                                        {% if notification.type.name == "issue" %}
+                                            <a href="/{{view}}/?order={{ notification.object_id }}&tab=flags">
+                                                <li class="list-group-item border-0 align-items-start">
+                                                    <div style="margin-right: 10px;">
+                                                        <i class="fas fa-exclamation-circle fa-2x"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class='text-bold'>Issue</h6>
+                                                        <p class='text-xs'>{{ notification.description }}</p>
+                                                    </div>
+                                                </li>
+                                            </a>
+                                        {% elif notification.type.name == "new_order" and view == "supplier" %}
+                                            <a href="/{{view}}/?order={{ notification.object_id }}">
+                                                <li class="list-group-item border-0 align-items-start">
+                                                    <div style="margin-right: 10px;">
+                                                        <i class="fas fa-shipping-fast fa-2x"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class='text-bold'>New order</h6>
+                                                        <p class='text-xs'>{{ notification.description }}</p>
+                                                    </div>
+                                                </li>
+                                            </a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="dropdown nav-icon mr-2">
+                            <a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
+                                <div class="d-lg-inline-block">
+                                    <i class="fas fa-comments fa-2x"></i>
+                                    {{ num_message_notifications }}
+                                </div>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right dropdown-menu-large">
+                                <h6 class='py-2 px-4'>Messages</h6>
+                                <ul class="list-group rounded-none">
+                                    {% for notification in notifications %}
+                                        {% if notification.type.name == "message" %}
+                                            <a href="/{{view}}/chat/{{ notification.object_id }}">
+                                                <li class="list-group-item border-0 align-items-start">
+                                                    <div style="margin-right: 10px;">
+                                                        <i class="fas fa-comments fa-2x"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class='text-bold'>Message</h6>
+                                                        <p class='text-xs'>{{ notification.description }}</p>
+                                                    </div>
+                                                </li>
+                                            </a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            
+            <div class="main-content container-fluid">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    <script src="https://kit.fontawesome.com/66b2bb64f4.js" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static',filename='js/feather-icons/feather.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='vendors/perfect-scrollbar/perfect-scrollbar.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static',filename='vendors/chartjs/Chart.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='vendors/apexcharts/apexcharts.min.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/pages/dashboard.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/main.js') }}"></script>
+
+    {% block additional_scripts %}
+    {% endblock %}
+    
+</body>
+</html>
